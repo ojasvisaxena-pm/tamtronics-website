@@ -50,6 +50,8 @@ Amplify Hosting runs the site as a Next.js SSR app (platform `WEB_COMPUTE`), bui
 
 **How secrets reach the server.** Amplify environment variables exist only during the build. [scripts/amplify-env.mjs](../scripts/amplify-env.mjs) reads the secret with the service role and writes it, with the non-secret settings, to `.env.production`. Next.js loads that file on the server only. The script refuses `NEXT_PUBLIC_` secret keys and never prints values. To rotate a secret, update it in Secrets Manager and redeploy the branch.
 
+**Media without a compute role (current setup).** The SSR runtime gets AWS credentials only from the Amplify compute role. Until an admin attaches it, `S3_MEDIA_PUBLIC_READ=true` is set: media URLs point straight at the bucket, and its policy allows public `s3:GetObject` on objects only. Listing and writes stay private. CMS uploads fail in this mode. Once the compute role is attached, set the variable to `false`, remove the `PublicReadMediaObjects` statement from the bucket policy, turn **Block public access** back on, and redeploy.
+
 **One-time setup by an admin.** These steps need IAM permissions, which `PowerUserAccess` lacks.
 
 ```bash

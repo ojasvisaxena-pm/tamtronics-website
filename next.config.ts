@@ -1,6 +1,15 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import type { NextConfig } from 'next'
 
+// With S3_MEDIA_PUBLIC_READ=true, media URLs point straight at the S3 bucket (see payload.config.ts),
+// so next/image must be allowed to fetch from it.
+const mediaBucket = process.env.S3_MEDIA_BUCKET
+const mediaRegion = process.env.S3_MEDIA_REGION || 'us-east-1'
+const s3MediaPattern =
+  mediaBucket && process.env.S3_MEDIA_PUBLIC_READ === 'true'
+    ? [{ protocol: 'https' as const, hostname: `${mediaBucket}.s3.${mediaRegion}.amazonaws.com`, pathname: '/**' }]
+    : []
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   // File tracing misses sharp's native libraries, and without them the standalone server crashes.
@@ -13,6 +22,7 @@ const nextConfig: NextConfig = {
     qualities: [75, 90],
     formats: ['image/webp'],
     localPatterns: [{ pathname: '/api/media/file/**' }, { pathname: '/assets/**' }],
+    remotePatterns: s3MediaPattern,
   },
   async redirects() {
     return [

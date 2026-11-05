@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { isAdmin, isLoggedIn } from '@/lib/access'
+import { mediaPublicBase, publicMediaURL } from '@/lib/mediaStorage'
 import { revalidateSite } from '@/lib/revalidate'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -17,7 +18,15 @@ export const Media: CollectionConfig = {
     mimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
     // The frontend resizes through next/image; this size is only for admin previews.
     imageSizes: [{ name: 'thumbnail', width: 400 }],
-    adminThumbnail: 'thumbnail',
+    // Payload builds named-size thumbnails from its own /api/media/file route, so in public S3 mode
+    // the admin gets the S3 URL of the thumbnail (or the original, e.g. for SVGs) instead.
+    adminThumbnail: mediaPublicBase
+      ? ({ doc }) => {
+          const thumb = (doc.sizes as { thumbnail?: { filename?: string } } | undefined)?.thumbnail?.filename
+          const file = thumb || (typeof doc.filename === 'string' ? doc.filename : '')
+          return file ? publicMediaURL(file, typeof doc.prefix === 'string' ? doc.prefix : undefined) : null
+        }
+      : 'thumbnail',
   },
   fields: [
     {

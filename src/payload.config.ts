@@ -19,6 +19,7 @@ import { PlatformLayers } from '@/globals/PlatformLayers'
 import { SiteSettings } from '@/globals/SiteSettings'
 import { isAdmin, isLoggedIn } from '@/lib/access'
 import { emailConfigured, smtp } from '@/lib/email/config'
+import { mediaBucket, mediaPublicBase, mediaRegion, publicMediaURL } from '@/lib/mediaStorage'
 import { revalidateSite } from '@/lib/revalidate'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -45,15 +46,19 @@ const email = emailConfigured
 
 // Uploads go to S3 when S3_MEDIA_BUCKET is set (required on serverless hosts such as Amplify, which
 // have no persistent disk). Credentials come from the default AWS chain: the Amplify compute role in
-// production, your AWS profile locally. Files are still served through /api/media/file, so the
+// production, your AWS profile locally. By default files are served through /api/media/file, so the
 // bucket stays private and Payload's access control applies.
-const mediaBucket = process.env.S3_MEDIA_BUCKET
+// S3_MEDIA_PUBLIC_READ=true switches to public URLs straight from S3; see src/lib/mediaStorage.ts.
 const mediaStorage = mediaBucket
   ? [
       s3Storage({
-        collections: { media: true },
+        collections: {
+          media: mediaPublicBase
+            ? { disablePayloadAccessControl: true, generateFileURL: ({ filename, prefix }) => publicMediaURL(filename, prefix) }
+            : true,
+        },
         bucket: mediaBucket,
-        config: { region: process.env.S3_MEDIA_REGION || process.env.AWS_REGION || 'us-east-1' },
+        config: { region: mediaRegion },
       }),
     ]
   : []
