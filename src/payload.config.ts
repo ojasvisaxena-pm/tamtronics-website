@@ -59,6 +59,8 @@ const mediaStorage = mediaBucket
   : []
 
 export default buildConfig({
+  // Absolute URLs in the admin's meta tags. Empty keeps them relative when the variable isn't set.
+  serverURL: process.env.NEXT_PUBLIC_SERVER_URL || '',
   admin: {
     user: Users.slug,
     importMap: { baseDir: dirname },
