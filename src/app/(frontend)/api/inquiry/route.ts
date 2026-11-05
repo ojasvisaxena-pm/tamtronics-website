@@ -1,4 +1,4 @@
-import { after, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
 import { sendInquiryEmails } from '@/lib/email/inquiryEmails'
 import { getCms } from '@/lib/cms'
@@ -6,6 +6,8 @@ import { buildInquirySchema, publicFormConfig } from '@/lib/inquiry'
 
 const WINDOW_MS = 10 * 60 * 1000
 const MAX_PER_WINDOW = 5
+// Longest the reply waits for the inquiry emails. SMTP timeouts are 10-20 s (payload.config.ts).
+const EMAIL_WAIT_MS = 20_000
 const hits = new Map<string, number[]>()
 
 // Per-process, so it resets on restart and is per-instance when scaled. Enough for form abuse on one server.
@@ -68,8 +70,11 @@ export async function POST(request: Request) {
         collection: 'form-submissions',
         data: { ...parsed.data, email, status: 'new', teamEmail: 'pending', confirmationEmail: 'pending' },
       })
-      // The submission is saved; email runs after the reply, so a slow or failing mail server never loses it.
-      after(() => sendInquiryEmails(payload, String(doc.id)))
+      // The submission is already saved, so a slow or failing mail server never loses it. Email is sent
+      // before replying because serverless hosts (AWS Amplify/Lambda) freeze the function once the
+      // response is out, and work scheduled with after() never runs there. The wait is capped so the
+      // visitor isn't held up; anything unfinished stays "Sending" in the admin.
+      await Promise.race([sendInquiryEmails(payload, String(doc.id)), new Promise((resolve) => setTimeout(resolve, EMAIL_WAIT_MS))])
     }
     return NextResponse.json({ ok: true })
   } catch (error) {

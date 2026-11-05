@@ -117,6 +117,6 @@ MongoDB needs no schema migrations for new fields. If a field is renamed or rest
 - Admin and API writes need a signed-in user; roles are admin and editor.
 - Accounts lock for 10 minutes after 5 failed logins.
 - Form submissions can only be created through the validated endpoint, which applies a same-origin check, a rate limit, a honeypot, duplicate detection, and the rules set in the CMS. Submissions and the email settings are never readable without signing in.
-- Inquiry emails are sent after the response, by the same server process. If it stops mid-send, the submission shows "Sending" in the admin; nothing is retried automatically.
+- Inquiry emails are sent after the submission is saved and before the reply, waiting at most 20 seconds. Serverless hosts such as Amplify freeze the function once it replies, so they can't send afterwards. If sending doesn't finish, the submission shows "Sending" in the admin; nothing is retried automatically.
 - Credentials stay in server-side environment variables.
 - No Content-Security-Policy is set site-wide; add one at launch if your security policy needs it.
