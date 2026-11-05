@@ -1,0 +1,56 @@
+# Website + MongoDB. See docs/DEPLOYMENT.md. The database must be running before the image is built:
+#   docker compose up -d mongo
+#   docker compose run --rm seed
+#   docker compose up -d --build web
+name: tamtronics
+networks:
+  default:
+    name: tamtronics
+services:
+  web:
+    build:
+      context: .
+      network: tamtronics
+      args:
+        MONGODB_URI: mongodb://mongo:27017/tamtronics
+        NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL:-http://localhost:3000}
+    ports:
+      - '3000:3000'
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/tamtronics
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET in .env}
+      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL:-http://localhost:3000}
+    volumes:
+      - media:/data/media
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+  seed:
+    profiles: [setup]
+    build:
+      context: .
+      target: source
+    command: npm run seed
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/tamtronics
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET in .env}
+      MEDIA_DIR: /data/media
+    volumes:
+      - media:/data/media
+    depends_on:
+      mongo:
+        condition: service_healthy
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+volumes:
+  media:
+  mongo-data:

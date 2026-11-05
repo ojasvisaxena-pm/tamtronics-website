@@ -1,0 +1,23 @@
+/** Kept apart from the artwork so the Payload config doesn't load all of the SVG data. */
+export const diagramNames = [
+  'hero-connected',
+  'architecture',
+  'signal-tile',
+  'tile-healthcare',
+  'tile-manufacturers',
+  'tile-rental',
+  'industry-healthcare',
+  'industry-manufacturers',
+  'industry-rental',
+  'fleet-scene',
+  'iot-scene',
+  'relation',
+  'layer-icon-equipment',
+  'layer-icon-connectivity',
+  'layer-icon-application',
+  'layer-icon-data',
+  'glyph-session',
+  'glyph-duration',
+  'glyph-power',
+  'glyph-connectivity',
+] as const

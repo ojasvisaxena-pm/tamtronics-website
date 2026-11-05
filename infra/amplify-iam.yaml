@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Tamtronics website - least-privilege IAM roles for AWS Amplify Hosting (Next.js SSR).
+  Service role: used by Amplify builds to read the app secret from Secrets Manager and write logs.
+  Compute role: used by the SSR runtime to store CMS uploads in the private media bucket.
+  Deploy with an identity that can create IAM roles (see docs/DEPLOYMENT.md > AWS Amplify).
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedPattern: '[a-z0-9-]+'
+  SecretName:
+    Type: String
+    Default: tamtronics/staging/app
+    Description: Secrets Manager secret holding MONGODB_URI, PAYLOAD_SECRET, SMTP_USER, SMTP_PASS.
+  MediaBucket:
+    Type: String
+    Default: tamtronics-media-staging-070648356909
+    Description: Private S3 bucket for Payload CMS uploads.
+
+Resources:
+  AmplifyServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub tamtronics-amplify-service-${Environment}
+      Description: Amplify build role for the Tamtronics website (reads app secret, writes logs).
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: amplify.amazonaws.com }
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals: { aws:SourceAccount: !Ref AWS::AccountId }
+      Policies:
+        - PolicyName: read-app-secret
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                # Secrets Manager appends a random 6-character suffix to the ARN.
+                Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretName}-??????
+        - PolicyName: amplify-logs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents, logs:DescribeLogGroups]
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/amplify/*
+      Tags:
+        - { Key: project, Value: tamtronics }
+        - { Key: env, Value: !Ref Environment }
+
+  AmplifyComputeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub tamtronics-amplify-compute-${Environment}
+      Description: Amplify SSR runtime role for the Tamtronics website (CMS media in S3).
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: amplify.amazonaws.com }
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals: { aws:SourceAccount: !Ref AWS::AccountId }
+      Policies:
+        - PolicyName: media-bucket
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !Sub arn:${AWS::Partition}:s3:::${MediaBucket}
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:DeleteObject]
+                Resource: !Sub arn:${AWS::Partition}:s3:::${MediaBucket}/*
+      Tags:
+        - { Key: project, Value: tamtronics }
+        - { Key: env, Value: !Ref Environment }
+
+Outputs:
+  ServiceRoleArn:
+    Value: !GetAtt AmplifyServiceRole.Arn
+  ComputeRoleArn:
+    Value: !GetAtt AmplifyComputeRole.Arn

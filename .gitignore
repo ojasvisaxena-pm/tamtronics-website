@@ -1,0 +1,32 @@
+# Dependencies and build output
+node_modules
+.next
+.npm
+out
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# Environment files: never commit real values. Only the template is tracked.
+.env
+.env.*
+!.env.example
+
+# AWS / Amplify local state and credentials
+.aws
+amplify/#current-cloud-backend
+amplify/.config/local-*
+amplify/team-provider-info.json
+aws-exports.js
+amplifyconfiguration.json
+*.pem
+
+# Local uploads and test output
+/media
+/test-results
+/playwright-report
+/tests/.baseline
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
