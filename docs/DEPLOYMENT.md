@@ -43,7 +43,7 @@ Amplify Hosting runs the site as a Next.js SSR app (platform `WEB_COMPUTE`), bui
 | --- | --- |
 | Region / account | `us-east-1` / `070648356909` |
 | Database | MongoDB Atlas. Amplify SSR can't reach a VPC, so DocumentDB and self-hosted private databases won't work. Atlas network access must allow `0.0.0.0/0`, because Amplify has no fixed egress IPs. Use a strong password and a user limited to the site's database. |
-| Secrets | Secrets Manager `tamtronics/staging/app` (JSON: `MONGODB_URI`, `PAYLOAD_SECRET`, `SMTP_USER`, `SMTP_PASS`) |
+| Secrets | Secrets Manager `tamtronics/staging/app` (JSON: `MONGODB_URI`, `PAYLOAD_SECRET`, `SMTP_USER`, `SMTP_PASS`, optionally `REVALIDATE_SECRET`) |
 | Uploads | Private S3 bucket `tamtronics-media-staging-070648356909` (versioned, encrypted, TLS only), served through `/api/media/file` |
 | IAM | [infra/amplify-iam.yaml](../infra/amplify-iam.yaml): service role (build reads the secret) and compute role (SSR reads and writes the bucket) |
 | Non-secret settings | Amplify environment variables: `APP_SECRET_ID`, `NEXT_PUBLIC_SERVER_URL`, `S3_MEDIA_BUCKET`, `S3_MEDIA_REGION`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` |
@@ -71,7 +71,9 @@ MONGODB_URI='<atlas uri>' PAYLOAD_SECRET='<from the secret>' AWS_PROFILE=<profil
   S3_MEDIA_BUCKET=tamtronics-media-staging-070648356909 S3_MEDIA_REGION=us-east-1 npm run seed
 ```
 
-Amplify runs several SSR instances, so the cache and rate-limit caveat in [Caching and content updates](#caching-and-content-updates) applies.
+Amplify runs several SSR instances. CMS edits still reach all of them at once; see [Caching and content updates](#caching-and-content-updates). The inquiry form's rate limit is per instance.
+
+After seeding or restoring a database the live site already uses, clear the page cache: `POST /api/revalidate` (same section).
 
 ## Docker
 
@@ -86,7 +88,24 @@ The Docker files have not been run yet: Docker wasn't running on the machine whe
 
 ## Caching and content updates
 
-Pages are cached and refreshed the moment an editor publishes. With more than one server instance, Next's cache and the form's rate limiter are per instance, so a publish only refreshes the instance that handled it until the hourly revalidation. Run one instance, or add a shared cache handler first.
+Published changes show on the live site on the next page load, on every server instance, without a rebuild or deployment.
+
+| Layer | What it does | How it is kept fresh |
+| --- | --- | --- |
+| CDN (CloudFront on Amplify) | Serves `/_next/static` (hashed, cached a year), images and `/assets` | Website pages are sent with `Cache-Control: public, max-age=0, s-maxage=0, must-revalidate` ([next.config.ts](../next.config.ts)), so the CDN asks the server every time and gets a quick `304` when nothing changed. Amplify's CDN can't be purged except by a deployment, so pages must not be stored there. |
+| Page cache (Next.js ISR) in each server instance | Keeps rendered pages, so most requests don't touch the database. Refreshes hourly as a fallback. | CMS hooks ([src/lib/revalidate.ts](../src/lib/revalidate.ts)) clear it on publish, unpublish, delete, and any change to a global, media or redirects. Draft saves and autosave don't. [cache-handler.mjs](../cache-handler.mjs) records each clear in MongoDB (`payload-kvs`, keys `next-cache:revalidated-tag:*`). Every instance checks for new clears at most once a second before serving from its cache. |
+| Browser | Next.js reuses prefetched pages for up to 5 minutes while a visitor stays on the site | Reloading the page shows the latest version. |
+
+Every published change refreshes all pages, because they share the header, footer and settings, and redirects can point at any page.
+
+**Changes made outside the CMS** (seed or migration scripts, database restores) don't run the hooks. Clear the cache afterwards, as a signed-in CMS user or with `REVALIDATE_SECRET`:
+
+```bash
+curl -X POST -H "Authorization: Bearer $REVALIDATE_SECRET" https://<site>/api/revalidate
+# {"ok":true,"revalidated":"/","at":"..."}   401 without a valid secret or session
+```
+
+**Checking it.** Response headers show the state: `x-nextjs-cache: HIT` (served from the page cache), `MISS` or `STALE` (rendered), and `X-Cache` from CloudFront. The server log has a line for each clear (`Site cache cleared: ...`). Errors are logged too: `Site cache not cleared` from a hook, `[cache-handler] ...` if MongoDB can't be reached. In that case instances fall back to the hourly refresh until it's back.
 
 ## Backup and recovery
 

@@ -29,6 +29,7 @@ npm run dev
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` | No | Mail server for "Forgot password?" emails and inquiry notifications. Without `SMTP_HOST`, nothing is sent: reset links are printed in the server log, and form submissions are still saved. |
 | `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` | No | Sender of those emails. The address defaults to `SMTP_USER`. |
 | `INQUIRY_RECEIVER_EMAIL` | No | Who gets new inquiries when the CMS lists no recipients. Comma-separated. |
+| `REVALIDATE_SECRET` | No | Bearer token for `POST /api/revalidate`, which clears the page cache after changes made outside the CMS (scripts, restores). Signed-in CMS users don't need it. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#caching-and-content-updates). |
 
 Canonical URLs, social tags and the sitemap use **Public website address** in Site Settings, not an environment variable.
 

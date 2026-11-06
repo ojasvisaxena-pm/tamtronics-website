@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createElement, type CSSProperties, Fragment } from 'react'
 
 import { diagramData } from '@/diagrams/data'
+import { mediaSrc } from '@/lib/mediaSrc'
 import type { Media } from '@/payload-types'
 
 export const css = (vars: Record<string, string | number | undefined | null>) => vars as CSSProperties
@@ -84,7 +85,7 @@ export function CmsImage({ media, alt, sizes = '(max-width: 860px) 100vw, 50vw',
   return (
     <Image
       className={className}
-      src={media.url}
+      src={mediaSrc(media.url)}
       alt={alt || media.alt}
       width={media.width ?? 800}
       height={media.height ?? 600}

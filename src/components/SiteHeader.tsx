@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
+import { mediaSrc } from '@/lib/mediaSrc'
 import type { Header, Media } from '@/payload-types'
 
 const Arrow = () => (
@@ -59,7 +60,7 @@ export function SiteHeader({ header }: { header: Header }) {
       <header className={`site-header${scrolled ? ' is-scrolled' : ''}${open ? ' menu-active' : ''}`}>
         <div className="container nav">
           <Link className="wordmark" href="/" aria-label="Tamtronics home">
-            <Image className="wordmark__img" src={logo.url!} alt={logo.alt} width={logo.width ?? 791} height={logo.height ?? 186} quality={90} priority sizes="240px" />
+            <Image className="wordmark__img" src={mediaSrc(logo.url!)} alt={logo.alt} width={logo.width ?? 791} height={logo.height ?? 186} quality={90} priority sizes="240px" />
           </Link>
           <nav aria-label="Primary">
             <ul className="nav__links">
