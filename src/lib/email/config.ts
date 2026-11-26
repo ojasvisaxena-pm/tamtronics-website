@@ -17,6 +17,23 @@ export const smtp = {
 /** Without SMTP_HOST, Payload only prints emails to the server log. */
 export const emailConfigured = Boolean(smtp.host)
 
+/**
+ * Microsoft 365 (Microsoft Graph sendMail, app-only sign-in). When all four are set, inquiry emails
+ * are sent from the MS_GRAPH_SENDER_EMAIL mailbox through Graph instead of SMTP. Other emails
+ * (password resets) keep using SMTP. MS_GRAPH_CLIENT_SECRET is a secret: server-side only.
+ */
+export const graph = {
+  tenantId: process.env.MS_GRAPH_TENANT_ID || '',
+  clientId: process.env.MS_GRAPH_CLIENT_ID || '',
+  clientSecret: process.env.MS_GRAPH_CLIENT_SECRET || '',
+  sender: process.env.MS_GRAPH_SENDER_EMAIL || '',
+}
+
+export const graphConfigured = Boolean(graph.tenantId && graph.clientId && graph.clientSecret && graph.sender)
+
+/** Whether inquiry emails can be sent at all: through Microsoft 365, or else SMTP. */
+export const inquiryEmailConfigured = graphConfigured || emailConfigured
+
 /** Fallback receivers when the CMS lists none. Comma-separated. */
 export const envReceivers = () =>
   (process.env.INQUIRY_RECEIVER_EMAIL || '')

@@ -56,7 +56,7 @@ The fields themselves (name, email, company, industry, message) are fixed, becau
 
 - **Status:** New, In progress or Completed. Use it to track follow-up.
 - **Notes:** internal notes, never sent anywhere.
-- **Email delivery:** whether each email was sent. *Failed* shows the reason from the mail server. *Not sent (email not set up)* means the server has no SMTP settings. The submission is always kept, even when email fails.
+- **Email delivery:** whether each email was sent. *Failed* shows the reason from the mail server. *Not sent (email not set up)* means the server has neither Microsoft 365 nor SMTP settings. The submission is always kept, even when email fails.
 
 What people typed can't be edited, so the record stays as it was received. Only admins can delete submissions.
 

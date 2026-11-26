@@ -189,7 +189,7 @@ export const InquiryForm: GlobalConfig = {
       },
       {
         label: 'Email notifications',
-        description: 'Only admins can change these. Sending needs the SMTP settings on the server (see the README).',
+        description: 'Only admins can change these. Sending needs the Microsoft 365 or SMTP settings on the server (see the README).',
         fields: [
           {
             name: 'notifications',

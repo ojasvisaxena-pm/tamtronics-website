@@ -8,7 +8,7 @@ The app is a single Node server plus MongoDB and a folder of uploads.
 - MongoDB, on Atlas or self-hosted. Give the site its own database and a user limited to it.
 - A persistent disk for uploads (`MEDIA_DIR`). Hosts without one, such as Vercel, need a Payload cloud storage adapter added first.
 - HTTPS at your proxy or host. The app doesn't terminate TLS.
-- An SMTP account for inquiry notifications and password resets (`SMTP_*`, `EMAIL_FROM_*`). Without one the site still works and saves every submission, but sends no email.
+- An SMTP account for inquiry notifications and password resets (`SMTP_*`, `EMAIL_FROM_*`), and/or Microsoft 365 for inquiry emails (`MS_GRAPH_*`, which takes over inquiry emails when set). Without either the site still works and saves every submission, but sends no email.
 
 The variables are listed in the [README](../README.md#environment-variables).
 
@@ -43,10 +43,10 @@ Amplify Hosting runs the site as a Next.js SSR app (platform `WEB_COMPUTE`), bui
 | --- | --- |
 | Region / account | `us-east-1` / `070648356909` |
 | Database | MongoDB Atlas. Amplify SSR can't reach a VPC, so DocumentDB and self-hosted private databases won't work. Atlas network access must allow `0.0.0.0/0`, because Amplify has no fixed egress IPs. Use a strong password and a user limited to the site's database. |
-| Secrets | Secrets Manager `tamtronics/staging/app` (JSON: `MONGODB_URI`, `PAYLOAD_SECRET`, `SMTP_USER`, `SMTP_PASS`, optionally `REVALIDATE_SECRET`) |
+| Secrets | Secrets Manager `tamtronics/staging/app` (JSON: `MONGODB_URI`, `PAYLOAD_SECRET`, `SMTP_USER`, `SMTP_PASS`, `MS_GRAPH_CLIENT_SECRET`, optionally `REVALIDATE_SECRET`) |
 | Uploads | Private S3 bucket `tamtronics-media-staging-070648356909` (versioned, encrypted, TLS only), served through `/api/media/file` |
 | IAM | [infra/amplify-iam.yaml](../infra/amplify-iam.yaml): service role (build reads the secret) and compute role (SSR reads and writes the bucket) |
-| Non-secret settings | Amplify environment variables: `APP_SECRET_ID`, `NEXT_PUBLIC_SERVER_URL`, `S3_MEDIA_BUCKET`, `S3_MEDIA_REGION`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` |
+| Non-secret settings | Amplify environment variables: `APP_SECRET_ID`, `NEXT_PUBLIC_SERVER_URL`, `S3_MEDIA_BUCKET`, `S3_MEDIA_REGION`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME`, `INQUIRY_RECEIVER_EMAIL`, `MS_GRAPH_TENANT_ID`, `MS_GRAPH_CLIENT_ID`, `MS_GRAPH_SENDER_EMAIL` |
 
 **How secrets reach the server.** Amplify environment variables exist only during the build. [scripts/amplify-env.mjs](../scripts/amplify-env.mjs) reads the secret with the service role and writes it, with the non-secret settings, to `.env.production`. Next.js loads that file on the server only. The script refuses `NEXT_PUBLIC_` secret keys and never prints values. To rotate a secret, update it in Secrets Manager and redeploy the branch.
 

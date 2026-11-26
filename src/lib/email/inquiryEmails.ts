@@ -3,8 +3,9 @@ import type { Payload } from 'payload'
 
 import type { FormSubmission, InquiryForm } from '@/payload-types'
 
-import { emailConfigured, envReceivers } from './config'
+import { envReceivers, inquiryEmailConfigured as emailConfigured } from './config'
 import { fillTokens, headerSafe, isPlainEmail } from './format'
+import { type InquiryMail, sendInquiryMail } from './graph'
 import { inquiryConfirmation } from './templates/inquiryConfirmation'
 import { type EmailRow, inquiryNotification } from './templates/inquiryNotification'
 
@@ -63,7 +64,7 @@ export async function sendInquiryEmails(payload: Payload, id: string) {
   const message = { label: form.message.label, value: doc.message ?? '' }
   const problems: string[] = []
 
-  const deliver = async (channel: Channel, enabled: boolean | null | undefined, to: string[], build: () => Parameters<Payload['sendEmail']>[0]) => {
+  const deliver = async (channel: Channel, enabled: boolean | null | undefined, to: string[], build: () => Omit<InquiryMail, 'to'>) => {
     let outcome: Outcome
     if (!enabled) outcome = 'disabled'
     else if (!emailConfigured || to.length === 0) {
@@ -72,7 +73,7 @@ export async function sendInquiryEmails(payload: Payload, id: string) {
     } else {
       if (!(await claim(payload, id, channel))) return
       try {
-        await payload.sendEmail({ ...build(), to })
+        await sendInquiryMail(payload, { ...build(), to })
         outcome = 'sent'
       } catch (error) {
         outcome = 'failed'

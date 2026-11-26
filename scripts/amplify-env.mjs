@@ -27,6 +27,10 @@ const PASSTHROUGH = [
   'EMAIL_FROM_ADDRESS',
   'EMAIL_FROM_NAME',
   'INQUIRY_RECEIVER_EMAIL',
+  // Microsoft 365 for inquiry emails. MS_GRAPH_CLIENT_SECRET belongs in the secret, not here.
+  'MS_GRAPH_TENANT_ID',
+  'MS_GRAPH_CLIENT_ID',
+  'MS_GRAPH_SENDER_EMAIL',
 ]
 
 const fail = (msg) => {
