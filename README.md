@@ -26,10 +26,10 @@ npm run dev
 | `MEDIA_DIR` | No | Folder for uploads. Defaults to `./media`. Must be persistent in production. Ignored when `S3_MEDIA_BUCKET` is set. |
 | `S3_MEDIA_BUCKET`, `S3_MEDIA_REGION` | On Amplify | Store uploads in a private S3 bucket. Required on serverless hosts. Uses the default AWS credential chain. |
 | `APP_SECRET_ID` | On Amplify | Secrets Manager secret read at build time by `scripts/amplify-env.mjs`. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#aws-amplify-staging). |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` | No | Mail server for "Forgot password?" emails and inquiry notifications. Without `SMTP_HOST`, nothing is sent: reset links are printed in the server log, and form submissions are still saved. |
-| `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` | No | Sender of those emails. The address defaults to `SMTP_USER`. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` | No | Mail server for "Forgot password?" emails and inquiry notifications, used when Microsoft 365 (`MS_GRAPH_*`) isn't set up. With neither, nothing is sent: reset links are printed in the server log, and form submissions are still saved. |
+| `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` | No | Sender of SMTP emails. The address defaults to `SMTP_USER`. With Microsoft 365, emails come from `MS_GRAPH_SENDER_EMAIL` under its Microsoft 365 display name. |
 | `INQUIRY_RECEIVER_EMAIL` | No | Who gets new inquiries when the CMS lists no recipients. Comma-separated. |
-| `MS_GRAPH_TENANT_ID`, `MS_GRAPH_CLIENT_ID`, `MS_GRAPH_CLIENT_SECRET`, `MS_GRAPH_SENDER_EMAIL` | No | Microsoft 365. When all four are set, inquiry emails (team notification and confirmation) are sent from the `MS_GRAPH_SENDER_EMAIL` mailbox through Microsoft Graph instead of SMTP. Password resets keep using SMTP. The client secret is server-side only. |
+| `MS_GRAPH_TENANT_ID`, `MS_GRAPH_CLIENT_ID`, `MS_GRAPH_CLIENT_SECRET`, `MS_GRAPH_SENDER_EMAIL` | No | Microsoft 365. When all four are set, every site email ("Forgot password?" and inquiry emails) is sent from the `MS_GRAPH_SENDER_EMAIL` mailbox through Microsoft Graph, and the SMTP settings are ignored. The client secret is server-side only. |
 | `REVALIDATE_SECRET` | No | Bearer token for `POST /api/revalidate`, which clears the page cache after changes made outside the CMS (scripts, restores). Signed-in CMS users don't need it. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#caching-and-content-updates). |
 
 Canonical URLs, social tags and the sitemap use **Public website address** in Site Settings, not an environment variable.

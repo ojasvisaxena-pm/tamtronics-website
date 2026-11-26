@@ -18,16 +18,20 @@ import { InquiryForm } from '@/globals/InquiryForm'
 import { PlatformLayers } from '@/globals/PlatformLayers'
 import { SiteSettings } from '@/globals/SiteSettings'
 import { isAdmin, isLoggedIn } from '@/lib/access'
-import { emailConfigured, smtp } from '@/lib/email/config'
+import { graphConfigured, smtp, smtpConfigured } from '@/lib/email/config'
+import { graphEmailAdapter } from '@/lib/email/graph'
 import { mediaBucket, mediaPublicBase, mediaRegion, publicMediaURL } from '@/lib/mediaStorage'
 import { revalidateSite } from '@/lib/revalidate'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
 
-// Emails (password resets, inquiry notifications) go out over SMTP when SMTP_HOST is set.
-// Without it Payload only prints each email to the server log, which is fine for local work.
-const email = emailConfigured
+// Emails (password resets, inquiry notifications) go out through Microsoft 365 when MS_GRAPH_* is set,
+// otherwise over SMTP when SMTP_HOST is set. With neither, Payload only prints each email to the
+// server log, which is fine for local work.
+const email = graphConfigured
+  ? graphEmailAdapter
+  : smtpConfigured
   ? nodemailerAdapter({
       defaultFromAddress: smtp.fromAddress,
       defaultFromName: smtp.fromName,

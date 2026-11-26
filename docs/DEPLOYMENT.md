@@ -8,7 +8,7 @@ The app is a single Node server plus MongoDB and a folder of uploads.
 - MongoDB, on Atlas or self-hosted. Give the site its own database and a user limited to it.
 - A persistent disk for uploads (`MEDIA_DIR`). Hosts without one, such as Vercel, need a Payload cloud storage adapter added first.
 - HTTPS at your proxy or host. The app doesn't terminate TLS.
-- An SMTP account for inquiry notifications and password resets (`SMTP_*`, `EMAIL_FROM_*`), and/or Microsoft 365 for inquiry emails (`MS_GRAPH_*`, which takes over inquiry emails when set). Without either the site still works and saves every submission, but sends no email.
+- Microsoft 365 (`MS_GRAPH_*`) or an SMTP account (`SMTP_*`, `EMAIL_FROM_*`) for inquiry notifications and password resets. Microsoft 365 is used when it is set up. Without either the site still works and saves every submission, but sends no email.
 
 The variables are listed in the [README](../README.md#environment-variables).
 

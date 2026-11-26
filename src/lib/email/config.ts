@@ -1,5 +1,5 @@
 /**
- * SMTP settings, read from the environment only. Shared by payload.config.ts (the transport)
+ * Email settings, read from the environment only. Shared by payload.config.ts (the transport)
  * and the inquiry emails (to know whether anything will really be sent).
  */
 const port = Number(process.env.SMTP_PORT) || 587
@@ -14,13 +14,12 @@ export const smtp = {
   fromName: process.env.EMAIL_FROM_NAME || 'Tamtronics',
 }
 
-/** Without SMTP_HOST, Payload only prints emails to the server log. */
-export const emailConfigured = Boolean(smtp.host)
+export const smtpConfigured = Boolean(smtp.host)
 
 /**
- * Microsoft 365 (Microsoft Graph sendMail, app-only sign-in). When all four are set, inquiry emails
- * are sent from the MS_GRAPH_SENDER_EMAIL mailbox through Graph instead of SMTP. Other emails
- * (password resets) keep using SMTP. MS_GRAPH_CLIENT_SECRET is a secret: server-side only.
+ * Microsoft 365 (Microsoft Graph sendMail, app-only sign-in). When all four are set, every site email
+ * (password resets and inquiry emails) is sent from the MS_GRAPH_SENDER_EMAIL mailbox through Graph,
+ * and the SMTP settings are ignored. MS_GRAPH_CLIENT_SECRET is a secret: server-side only.
  */
 export const graph = {
   tenantId: process.env.MS_GRAPH_TENANT_ID || '',
@@ -31,8 +30,8 @@ export const graph = {
 
 export const graphConfigured = Boolean(graph.tenantId && graph.clientId && graph.clientSecret && graph.sender)
 
-/** Whether inquiry emails can be sent at all: through Microsoft 365, or else SMTP. */
-export const inquiryEmailConfigured = graphConfigured || emailConfigured
+/** Microsoft 365 first, then SMTP. With neither, Payload only prints emails to the server log. */
+export const emailConfigured = graphConfigured || smtpConfigured
 
 /** Fallback receivers when the CMS lists none. Comma-separated. */
 export const envReceivers = () =>
